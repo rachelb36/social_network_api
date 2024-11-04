@@ -1,59 +1,49 @@
-const { Schema, model, mongoose } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
-// Schema to create User model
+// Define User schema
 const userSchema = new Schema(
   {
     username: {
       type: String,
       required: true,
-      maxLength: 50, // Use camelCase for consistency
+      unique: true,
+      trim: true,
+      maxLength: 50, // Limit username length
     },
     email: {
       type: String,
       required: true,
-      maxLength: 50,
-      validate: {
-        validator: function (v) {
-          return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v); // Email regex validation
-        },
-        message: 'Please enter a valid email',
-      },
+      unique: true,
+      match: [/^([a-zA-Z0-9_\.-]+)@([a-zA-Z\.-]+)\.([a-zA-Z\.]{2,6})$/, 'Please enter a valid email address'], // Email format validation
     },
-    friends: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to other users
-      },
-    ],
     thoughts: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Thought', // Assuming there's a Thought model
+        type: Schema.Types.ObjectId,
+        ref: 'Thought', // References Thought model
+      },
+    ],
+    friends: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User', // References User model for friend connections
       },
     ],
   },
   {
     toJSON: {
-      getters: true,
-      virtuals: true, // Ensure virtuals are included in JSON
+      virtuals: true, // Include virtuals in JSON output
     },
-    id: false, // Disable _id field for virtuals
+    id: false, // Disable default `id` field
   }
 );
 
-// Virtual to get the count of friends
+// Virtual to get the friend count
 userSchema.virtual('friendCount').get(function () {
-  return this.friends.length; // Return the count of friends
+  return this.friends.length;
 });
 
-const User = model('User', userSchema); // Capitalized model name for consistency
+// Create User model
+const User = model('User', userSchema);
 
-// Create example
-User.create({
-  username: 'johndoe',
-  email: 'john@email.com', // Fixed this part
-})
-  .then((result) => console.log('Created new document', result))
-  .catch((err) => console.error('Error creating document', err)); // Log the error properly
-
+// Export User model
 module.exports = User;

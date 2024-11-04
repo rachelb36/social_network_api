@@ -1,76 +1,48 @@
-const { Schema, model, Types } = require('mongoose');
+// Import necessary components from Mongoose and reaction schema
+const { Schema, model } = require('mongoose');
+const reactionSchema = require('./Reaction');
 
-// Schema for Reaction subdocument
-const reactionSchema = new Schema(
-  {
-    reactionId: {
-      type: Schema.Types.ObjectId,
-      default: () => new Types.ObjectId(),
-    },
-    reactionBody: {
-      type: String,
-      required: true,
-      maxLength: 280,
-    },
-    username: {
-      type: String,
-      required: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-      get: (timestamp) => {
-        const dayjs = require('dayjs');
-        return dayjs(timestamp).format('dddd, mmmm dS, yyyy, h:MM TT');
-      },
-    },
-  },
-  {
-    toJSON: {
-      getters: true,
-    },
-    _id: false,
-  }
-);
-
-// Schema to create Thought model
+// Define the Thought schema
 const thoughtSchema = new Schema(
-  {
-    thoughtText: {
-      type: String,
-      required: true,
-      maxLength: 280,
+    {
+        thoughtText: {
+            type: String,
+            required: true,
+            minLength: 1, // Use camelCase for minLength
+            maxLength: 280, // Use camelCase for maxLength
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now, // Set to current date
+            get: formatDate, // Format date on retrieval
+        },
+        username: {
+            type: String,
+            required: true, // Username of thought creator
+        },
+        reactions: [reactionSchema], // Array of reactions
     },
-    username: {
-      type: String,
-      required: true,
-    },
-    reactions: [reactionSchema],
-    createdAt: {
-      type: Date,
-      default: Date.now,
-      get: (timestamp) => {
-        const dayjs = require('dayjs');
-        return dayjs(timestamp).format('dddd, mmmm dS, yyyy, h:MM TT');
-      },
-    },
-  },
-  {
-    toJSON: {
-      virtuals: true,
-      getters: true,
-    },
-    timestamps: true, // Automatically adds createdAt and updatedAt
-    id: false,
-  }
+    {
+        toJSON: {
+            getters: true,
+            virtuals: true,
+        },
+        id: false, // Disable default `id` for virtuals
+    }
 );
 
-// Virtual to get the count of reactions
+// Virtual to get the reaction count
 thoughtSchema.virtual('reactionCount').get(function () {
-  return this.reactions.length;
+    return this.reactions.length;
 });
+
+// Helper function to format the date
+function formatDate(createdAt) {
+    return createdAt.toLocaleString();
+}
 
 // Create Thought model
 const Thought = model('Thought', thoughtSchema);
 
+// Export Thought model
 module.exports = Thought;
